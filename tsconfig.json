@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "incremental": true,
+    "target": "es2019",
+    "module": "commonjs",
+    "allowJs": false,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "declaration": false,
+    "skipLibCheck": true,
+    "importHelpers": false,
+    "strictNullChecks": true,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "removeComments": true,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": true,
+    "listFiles": false,
+    "noImplicitThis": true,
+    "traceResolution": false,
+    "pretty": false,
+    "noImplicitAny": true,
+    "forceConsistentCasingInFileNames": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "outDir": "dist",
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "typeRoots": ["node_modules/@types"],
+    "paths": {
+      "~/*": ["./src/*"],
+      "~app/*": ["./src/app/*"]
+    },
+    "lib": [
+      "es2018"
+    ]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "packages"]
+}
