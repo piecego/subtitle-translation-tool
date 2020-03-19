@@ -1,8 +1,8 @@
 {
-  "name": "@piecego/srt-translation",
+  "name": "@piecego/trans",
   "version": "1.0.0",
   "description": "使用谷歌翻译API翻译字幕",
-  "main": "src/main.ts",
+  "main": "src/app.ts",
   "scripts": {
     "build": "tsc --build --watch tsconfig.json"
   },
@@ -10,6 +10,10 @@
   "repository": "https://github.com/piecego/subtitle-translation-tool.git",
   "author": "piecego",
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "files": ["dist"],
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/fs-extra": "^8.1.0",

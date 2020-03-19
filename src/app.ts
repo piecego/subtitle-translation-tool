@@ -90,5 +90,5 @@ yargs
     }
   )
   .wrap(Math.min(120, process.stdout.columns))
-  .help()
-  .argv
+  .strict()
+  .showHelp()
