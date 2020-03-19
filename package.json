@@ -11,9 +11,11 @@
   "author": "piecego",
   "license": "MIT",
   "devDependencies": {
+    "@types/chalk": "^2.2.0",
     "@types/fs-extra": "^8.1.0",
     "@types/node": "^13.9.1",
     "@types/pumpify": "^1.4.1",
+    "@types/puppeteer": "^2.0.1",
     "@types/split2": "^2.1.6",
     "@types/through2": "^2.0.34",
     "@types/yargs": "^15.0.4",
@@ -22,11 +24,15 @@
   },
   "dependencies": {
     "@google-cloud/translate": "^5.3.0",
+    "chalk": "^3.0.0",
     "dotenv": "^8.2.0",
     "fs-extra": "^8.1.0",
     "pumpify": "^2.0.1",
+    "puppeteer": "^2.1.1",
+    "remove": "^0.1.5",
     "split2": "^3.1.1",
     "through2": "^3.0.1",
+    "trash": "^6.1.1",
     "yargs": "^15.3.1"
   }
 }
