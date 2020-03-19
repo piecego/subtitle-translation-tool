@@ -106,3 +106,4 @@ dist/
 .env
 temp
 Tools-*.json
+yarn.lock
