@@ -2,7 +2,7 @@
   "name": "@piecego/trans",
   "version": "1.0.1",
   "description": "使用谷歌翻译API翻译字幕",
-  "main": "src/app.ts",
+  "main": "dist/app.ts",
   "scripts": {
     "build": "tsc --build --watch tsconfig.json"
   },
