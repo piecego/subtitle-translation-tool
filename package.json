@@ -1,10 +1,11 @@
 {
   "name": "@piecego/trans",
-  "version": "1.0.3",
+  "version": "0.0.3",
   "description": "使用谷歌翻译API翻译字幕",
   "main": "dist/app.ts",
   "scripts": {
-    "build": "tsc --build --watch tsconfig.json"
+    "build": "tsc --build --watch tsconfig.json",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\""
   },
   "bin": "dist/app.js",
   "repository": "https://github.com/piecego/subtitle-translation-tool.git",
@@ -14,7 +15,7 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "files": [
-    "dist"
+    "dist/**/*.js"
   ],
   "devDependencies": {
     "@types/chalk": "^2.2.0",

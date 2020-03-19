@@ -1,1 +1,7 @@
-**/*.js.map
+src
+tsconfig.json
+temp
+.prettierrc
+.gitignore
+.env
+yarn.lock
