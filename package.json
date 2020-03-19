@@ -1,6 +1,6 @@
 {
   "name": "@piecego/trans",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "使用谷歌翻译API翻译字幕",
   "main": "dist/app.ts",
   "scripts": {
