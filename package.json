@@ -1,6 +1,6 @@
 {
   "name": "@piecego/trans",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "使用谷歌翻译API翻译字幕",
   "main": "src/app.ts",
   "scripts": {
@@ -13,7 +13,9 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/fs-extra": "^8.1.0",
