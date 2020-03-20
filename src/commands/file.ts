@@ -43,7 +43,7 @@ export interface FileOptions {
 const keywords: string[] = []
 
 export class FileTranslation {
-  private keywordsMap: Map<string, string>
+  private readonly keywordsMap: Map<string, string>
   constructor(private opts: Arguments<FileOptions>) {
     if (opts.keywords) {
       const keys = opts.keywords.split(/,，/g)
@@ -55,7 +55,7 @@ export class FileTranslation {
   }
   async translate() {
     if (!this.opts.path) {
-      logger.error('[path] cannot be empty')
+      logger.error('[path] cannot be empty, use --help view help info')
       return void 0
     }
     await write.init({

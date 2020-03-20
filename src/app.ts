@@ -6,7 +6,7 @@ import { TextOptions } from './commands/text'
 import { FileOptions } from './commands/file'
 
 dotenv.config()
-yargs
+const command = yargs
   .scriptName('trans')
   .usage('$0 <command> [value] [--option]')
   .command<TextOptions>(
@@ -91,4 +91,8 @@ yargs
   )
   .wrap(Math.min(120, process.stdout.columns))
   .strict()
-  .showHelp()
+if (process.argv.length <= 2) {
+  command.showHelp()
+} else {
+  command.parse()
+}

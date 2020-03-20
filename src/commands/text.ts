@@ -12,7 +12,7 @@ const logger = createLogger('TextTranslation')
 
 export default async function text(opts: Arguments<TextOptions>) {
   if (!opts.value) {
-    logger.error('[value] cannot be empty')
+    logger.error('[value] cannot be empty, use --help view help info')
     return void 0
   }
   await write.init({
