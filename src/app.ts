@@ -89,6 +89,26 @@ const command = yargs
       process.exit()
     }
   )
+  .command({
+    command: 'test',
+    describe: 'test app',
+    handler: () => {
+      const MOVE_LEFT = Buffer.from('1b5b3130303044', 'hex').toString()
+      const MOVE_UP = Buffer.from('1b5b3141', 'hex').toString()
+      const CLEAR_LINE = Buffer.from('1b5b304b', 'hex').toString()
+      function clear() {
+        process.stdout.write(`${MOVE_LEFT}${CLEAR_LINE}${MOVE_UP}`)
+      }
+      for (let i = 0; i <= 8; i++) {
+        setTimeout(() => {
+          console.log('line: ', i)
+          setTimeout(() => {
+            clear()
+          }, 100)
+        }, i * 1000)
+      }
+    }
+  })
   .wrap(Math.min(120, process.stdout.columns))
   .strict()
 if (process.argv.length <= 2) {

@@ -138,7 +138,7 @@ export class Write {
       throw new Error('Please use the "init" method to initialize')
     return await this.target.translate(input)
   }
-  public write(keyMaps: Map<string, string>) {
+  public write(keyMaps: Map<string, string>, progress: (len: number) => void) {
     if (!this.initialized)
       throw new Error('Please use the "init" method to initialize')
     let contextCache = ''
@@ -149,6 +149,7 @@ export class Write {
     const keywords = table.convert(keyMaps)
     return (chunk: Buffer | string, enc: string, cb: TransformCallback) => {
       const line = chunk.toString(enc)
+      progress(line.length)
       if (/^\d+\s*$/.test(line)) {
         cb()
         return void 0

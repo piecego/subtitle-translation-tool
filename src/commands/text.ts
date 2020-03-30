@@ -1,4 +1,4 @@
-import { createLogger } from '../utils'
+import { createLogger } from '../utils/logger.util'
 import { Arguments } from 'yargs'
 import write from '../helpers/write'
 

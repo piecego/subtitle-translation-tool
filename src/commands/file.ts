@@ -5,22 +5,45 @@ import split from 'split2'
 import Pumpify from 'pumpify'
 import through from 'through2'
 import write from '../helpers/write'
-import { createLogger, Logger } from '../utils'
+import { createLogger, Logger } from '../utils/logger.util'
 import trash from 'trash'
+import {
+  clear,
+  clearLine,
+  move,
+  singleOutput,
+} from '../utils/single-line-log.utils'
+import { wait } from '../utils/timer.utils'
 
 function readStream(
   input: string,
   output: string,
-  keyMaps: Map<string, string>
+  keyMaps: Map<string, string>,
+  progress: (percentage: number) => void
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const { size } = await fs.stat(input)
+    let total = 0
     fs.createReadStream(input)
-      .pipe(new Pumpify(split(), through.obj(write.write(keyMaps))))
+      .pipe(
+        new Pumpify(
+          split(),
+          through.obj(
+            write.write(keyMaps, (len) => {
+              total += len
+              progress((total / size) * 100)
+            })
+          )
+        )
+      )
       .on('error', reject)
       .pipe(
         fs
           .createWriteStream(output)
-          .on('close', resolve)
+          .on('close', () => {
+            progress(100)
+            resolve()
+          })
           .on('error', reject)
       )
   })
@@ -58,23 +81,27 @@ export class FileTranslation {
       logger.error('[path] cannot be empty, use --help view help info')
       return void 0
     }
+    if (this.opts.worker === 0) {
+      return void 0
+    }
+    logger.info(`初始化中`)
     await write.init({
       language: this.opts.language,
       mode: this.opts.mode,
       worker: this.opts.worker,
       headless: this.opts.headless,
-      split: line => {
+      split: (line) => {
         if (/[.。]$/gm.test(line)) {
           return [line]
         }
         if (/[?？]/gm.test(line)) {
-          return line.split(/[?？]/g).map((v, i) => i === 0 ? v + '?' : v)
+          return line.split(/[?？]/g).map((v, i) => (i === 0 ? v + '?' : v))
         }
         if (/[;；]/gm.test(line)) {
-          return line.split(/[;；]/g).map((v, i) => i === 0 ? v + ';' : v)
+          return line.split(/[;；]/g).map((v, i) => (i === 0 ? v + ';' : v))
         }
         return []
-      }
+      },
     })
     await this.read(this.opts.path)
   }
@@ -108,14 +135,33 @@ export class FileTranslation {
       }
     }
     if (this.opts.clear) return void 0
-    logger.info(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译中`)
+    singleOutput(
+      logger.infoInject(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译中 0%`)
+    )
     try {
-      await readStream(file, output, this.keywordsMap)
+      await readStream(file, output, this.keywordsMap, (percentage) => {
+        clearLine()
+        singleOutput(
+          logger.infoInject(
+            `${' '.repeat(indent)}|${'-'.repeat(4)}翻译中 ${percentage.toFixed(
+              2
+            )}%`
+          )
+        )
+      })
+      await wait(160)
+      clearLine()
       logger.success(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译完成`)
     } catch (e) {
+      await fs.remove(output)
+      clearLine()
       switch (e) {
         case 1003:
           logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译超时`)
+          break
+        case 1000:
+          logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}运行超载`)
+          this.readFile(file, tab, logger)
           break
         case 1002:
           logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}无法获取翻译结果`)
@@ -123,18 +169,15 @@ export class FileTranslation {
         case 1001:
           logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译内容为空`)
           break
-        case 1000:
-          logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}运行超载`)
-          break
         default:
           logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译失败`)
-          console.error('Error', e)
+          console.error(e)
       }
     }
   }
   async readDir(dir: string, tab = 0, logger: Logger) {
     let files = (await fs.readdir(dir)).filter(
-      f => !f.includes(this.opts.language)
+      (f) => !f.includes(this.opts.language)
     )
     logger.info(
       `${' '.repeat(tab)}|${'-'.repeat(3)}Directory: "${parse(dir).base}"`
@@ -144,7 +187,7 @@ export class FileTranslation {
       await Promise.all(
         files
           .slice(i * max, i * max + max)
-          .map(file => this.read(join(dir, file), tab + 2))
+          .map((file) => this.read(join(dir, file), tab + 2))
       )
     }
   }

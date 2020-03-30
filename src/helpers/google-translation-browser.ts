@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer'
 import { URLSearchParams } from 'url'
-import { wait } from '../utils'
+import { wait } from '../utils/timer.utils'
 
 interface PageWrap {
   page: puppeteer.Page
@@ -52,6 +52,7 @@ export class GoogleTranslationBrowser {
       }
     } catch (e) {
       console.error('[error] when init')
+      console.log(e)
       return false
     }
     return true
