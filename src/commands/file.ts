@@ -176,9 +176,13 @@ export class FileTranslation {
     }
   }
   async readDir(dir: string, tab = 0, logger: Logger) {
-    let files = (await fs.readdir(dir)).filter(
-      (f) => !f.includes(this.opts.language)
-    )
+    let files = (await fs.readdir(dir))
+      .filter((f) => !f.includes(this.opts.language))
+      .sort((a, b) => {
+        let aid = Number(a.match(/^\d+(?:\.?\d+)?/)?.[0]) || a
+        let bid = Number(b.match(/^\d+(?:\.?\d+)?/)?.[0]) || b
+        return aid > bid ? 1 : aid < bid ? -1 : 0
+      })
     logger.info(
       `${' '.repeat(tab)}|${'-'.repeat(3)}Directory: "${parse(dir).base}"`
     )
