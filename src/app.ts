@@ -89,6 +89,15 @@ const command = yargs
       process.exit()
     }
   )
+  .command(
+    'clear',
+    'clear PowerShell screen',
+    async () => {
+      const { clearScreen } = await import('./utils/clear-screen.util')
+      clearScreen()
+      process.exit()
+    }
+  )
   .command({
     command: 'test',
     describe: 'test app',
