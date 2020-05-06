@@ -82,7 +82,8 @@ export class Multiline {
             readline.moveCursor(process.stdout, 0, -1)
           }
         } else {
-        //  增加
+          //  增加
+          process.stdout.write('\n'.repeat(Math.abs(diff)))
         }
         for (const v of Multiline.cache.values()) {
           if (v.index > data.index) {
@@ -92,7 +93,6 @@ export class Multiline {
         Multiline.index -= diff
       }
       // console.log(`Refresh: ${this.line - data.line} # ${id}`)
-      await this.render()
     } else {
       const index = Multiline.index + 1
       Multiline.index += line
@@ -115,8 +115,8 @@ export class Multiline {
       // this.line > 0 && move(0,1)
       // 仅为给每行占用空间，多好自带换行符占用，所以无需更改
       index > 0 && process.stdout.write('\n')
-      await this.render()
     }
+    await this.render()
   }
   static create(description = 'Multiline ID') {
     return new Multiline(Symbol(description))
