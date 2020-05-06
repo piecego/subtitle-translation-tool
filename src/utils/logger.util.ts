@@ -16,19 +16,22 @@ export const createLogger = (
     info: (...message: string[]) => {
       console.log(`${info} - ${prefix} - ${message.join(' - ')}`)
     },
-    infoInject: (...message: string[]) => {
+    getInfo: (...message: string[]) => {
       return `${info} - ${prefix} - ${message.join(' - ')}`
     },
     error: (...message: string[]) => {
       console.log(`${error} - ${prefix} - ${chalk.red(message.join(' - '))}`)
     },
-    errorInject: (...message: string[]) => {
+    getError: (...message: string[]) => {
       return `${error} - ${prefix} - ${chalk.red(message.join(' - '))}`
     },
     success: (...message: string[]) => {
       console.log(
         `${success} - ${prefix} - ${chalk.green(message.join(' - '))}`
       )
+    },
+    getSuccess: (...message: string[]) => {
+      return `${success} - ${prefix} - ${chalk.green(message.join(' - '))}`
     },
     debug: (...message: string[]) => {
       console.log(
@@ -39,6 +42,9 @@ export const createLogger = (
       console.log(
         `${warn} - ${prefix} - ${chalk.hex('#cc4e25')(message.join(' - '))}`
       )
+    },
+    getWarn: (...message: string[]) => {
+      return `${warn} - ${prefix} - ${chalk.hex('#cc4e25')(message.join(' - '))}`
     },
     trace: (...message: string[]) => {
       console.log(`${trace} - ${prefix} - ${message.join(' - ')}`)
