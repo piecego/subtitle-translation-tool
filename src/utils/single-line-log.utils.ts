@@ -1,6 +1,5 @@
 import readline from 'readline'
 import stringWidth from 'string-width'
-import { wait } from './timer.utils'
 
 export function singleOutput(message: string) {
   process.stdout.write(message)
@@ -8,7 +7,7 @@ export function singleOutput(message: string) {
 
 export function progress(p: number, pad: number = 0) {
   p = Math.min(100, p)
-  const columns = process.stdout.columns - 8 - pad
+  const columns = process.stdout.columns - 9 - pad
   const pr = Math.floor((columns / 100) * p)
   const v = `▮`.repeat(pr)
   const s = ' '.repeat(Math.max(0, columns - pr))
@@ -30,50 +29,81 @@ export function move(x: number, y: number = 0) {
 enum Direction {
   clearLeft = -1,
   clearAll,
-  clearRight
+  clearRight,
 }
 
 interface MultilineCache {
-  id: string
+  // 日子ID
+  id: Symbol
+  // 日志位置(即行数), 值越小越靠近底部
   index: number
+  // 内容长度
   length: number
   message: string
+  // 占用行数
   line: number
+  // 已经渲染
   rendered: boolean
+  // 日志时间，用于排序
   time: number
 }
 
 export class Multiline {
-  static cache: Map<string, MultilineCache> = new Map()
-  static index = -1
-  static inUsing = false
-  static async track(message: string, id: string) {
+  // 日志缓存
+  private static cache: Map<Symbol, MultilineCache> = new Map()
+  // 占用位置
+  private static index = -1
+  private static inUsing = false
+  constructor(private readonly id: Symbol) {}
+  // 输出信息
+  async track(message: string) {
     const newline = message.match(/\n/g)?.length
     const line = newline ? newline + 1 : 1
-    if (this.cache.has(id)) {
-      const data = this.cache.get(id) as MultilineCache
-      this.cache.set(id, {
-        id,
+    if (Multiline.cache.has(this.id)) {
+      const data = Multiline.cache.get(this.id) as MultilineCache
+      Multiline.cache.set(this.id, {
+        id: this.id,
         length: stringWidth(message),
         message,
         index: data.index,
-        line: data.line,
+        line,
         rendered: data.rendered,
-        time: Date.now()
+        time: Date.now(),
       })
+      // 处理内容占用行数变动
+      if (line !== data.line) {
+        const diff = data.line - line
+        if (diff > 0) {
+          for (const l of Array.from({ length: diff }).keys()) {
+            await this.clearNthLine(Multiline.index - data.index + l - 1)
+          }
+          for (let i of Array.from({ length: diff })) {
+            await this.clearLine()
+            readline.moveCursor(process.stdout, 0, -1)
+          }
+        } else {
+        //  增加
+        }
+        for (const v of Multiline.cache.values()) {
+          if (v.index > data.index) {
+            v.index -= diff
+          }
+        }
+        Multiline.index -= diff
+      }
       // console.log(`Refresh: ${this.line - data.line} # ${id}`)
       await this.render()
     } else {
-      const index = this.index + 1
-      this.index += line
-      this.cache.set(id, {
-        id,
+      const index = Multiline.index + 1
+      Multiline.index += line
+      Multiline.cache.set(this.id, {
+        id: this.id,
         length: stringWidth(message),
         message: message,
         index,
         line,
         rendered: false,
-        time: Date.now()
+        time: Date.now(),
       })
       // console.log(`Add: ${0} # ${id}`)
       // 移动到下一行
@@ -88,13 +118,16 @@ export class Multiline {
       await this.render()
     }
   }
-  static clearLine() {
+  static create(description = 'Multiline ID') {
+    return new Multiline(Symbol(description))
+  }
+  clearLine() {
     if (process.stdout.columns > 0) {
       process.stdout.write(`\r${' '.repeat(process.stdout.columns - 1)}`)
     }
     process.stdout.write('\r')
   }
-  static async writeOnNthLine(n: number, message: string) {
+  async writeOnNthLine(n: number, message: string) {
     // console.log(n)
     if (n === 0) {
       readline.cursorTo(process.stdout, 0)
@@ -106,7 +139,6 @@ export class Multiline {
     // 移动到需要修改的行
     readline.moveCursor(process.stdout, 0, -n)
     process.stdout.write(message)
-    // await wait(3000)
     // 当n=0一般都为第一次渲染，不需要进行多行清除
     if (message.includes('\n')) {
       const lines = message.split('\n')
@@ -120,18 +152,15 @@ export class Multiline {
       }
       // 当循环结束就没有新的行了，需要回到之前所在行
       // await wait(3000)
-      readline.moveCursor(process.stdout, 0, -(lines.length))
+      readline.moveCursor(process.stdout, 0, -lines.length)
     } else {
       readline.clearLine(process.stdout, Direction.clearRight)
     }
     // 回到最底部
-    // await wait(3000)
     readline.moveCursor(process.stdout, 0, n)
-    // await wait(3000)
     n < 0 && readline.cursorTo(process.stdout, 0)
-    // await wait(3000)
   }
-  static sort(a: MultilineCache, b: MultilineCache) {
+  sort(a: MultilineCache, b: MultilineCache) {
     if (!a.rendered) {
       if (!b.rendered) {
         return a.time > b.time ? 1 : a.time < b.time ? -1 : 0
@@ -140,20 +169,20 @@ export class Multiline {
     }
     return a.time > b.time ? 1 : a.time < b.time ? -1 : 0
   }
-  static async clearNthLine(n: number) {
+  async clearNthLine(n: number) {
     if (n === 0) {
       clearLine()
       return void 0
     }
     readline.cursorTo(process.stdout, 0)
     readline.moveCursor(process.stdout, 0, -n)
-    readline.clearLine(process.stdout, 0)
+    readline.clearLine(process.stdout, Direction.clearAll)
     readline.moveCursor(process.stdout, 0, n)
   }
-  static async render() {
-    for (let data of Array.from(this.cache.values()).sort(this.sort)) {
+  async render() {
+    for (let data of Array.from(Multiline.cache.values()).sort(this.sort)) {
       // 本身占用一行，所以总共占用行数减一
-      const index = this.index - data.index - (data.line - 1)
+      const index = Multiline.index - data.index - (data.line - 1)
       if (data.rendered) {
         // console.log(data, index + data.line - 1)
         // console.log(`Again render => ID: ${data.id} => INDEX: ${index + data.line - 1}`)
@@ -167,10 +196,11 @@ export class Multiline {
       }
     }
   }
+  // 结束
   static end() {
-    this.inUsing = false
-    this.index = -1
-    this.cache.clear()
+    Multiline.inUsing = false
+    Multiline.index = -1
+    Multiline.cache.clear()
     process.stdout.write('\n')
   }
 }
