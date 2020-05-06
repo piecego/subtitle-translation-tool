@@ -10,7 +10,7 @@ enum Direction {
 interface LogItem {
   // 日子ID
   id: Symbol
-  // 日志位置(即行数), 值越小越靠近底部
+  // 日志结束位置, 值越小越靠近底部，计算开始位置为total - (index + line - 1)， 本身占用一行，所以总共占用行数减一
   index: number
   // 内容长度
   length: number
@@ -53,25 +53,31 @@ export class DynamicTerminal {
       // 处理内容占用行数变动
       if (line !== data.line) {
         const diff = data.line - line
+        // 行数减少
         if (diff > 0) {
+          // 清理多余的行
           for (const l of Array.from({ length: diff }).keys()) {
             DynamicTerminal.clearNthLine(
-              DynamicTerminal.totalLine - data.index + l - data.line
+              // 参考index属性的说明
+              DynamicTerminal.totalLine - (data.index + data.line) + l 
             )
           }
+          // 清理最下面空出来的行
           for (let i of Array.from({ length: diff })) {
             await DynamicTerminal.clearLine()
             readline.moveCursor(process.stdout, 0, -1)
           }
         } else {
-          //  增加
+          //  行数增加
           process.stdout.write('\n'.repeat(Math.abs(diff)))
         }
+        // 改变每个数据的位置
         for (const v of DynamicTerminal.cache.values()) {
           if (v.index > data.index) {
             v.index -= diff
           }
         }
+        // 更改总行数
         DynamicTerminal.totalLine -= diff
       }
       // console.log(`Refresh: ${this.line - data.line} # ${id}`)
@@ -222,8 +228,7 @@ export class DynamicTerminal {
     for (let data of Array.from(DynamicTerminal.cache.values()).sort(
       DynamicTerminal.sort
     )) {
-      // 本身占用一行，所以总共占用行数减一
-      const index = DynamicTerminal.totalLine - data.index - (data.line - 1)
+      const index = DynamicTerminal.totalLine - (data.index + data.line - 1)
       if (data.rendered) {
         // console.log(data, index + data.line - 1)
         // console.log(`Again render => ID: ${data.id} => INDEX: ${index + data.line - 1}`)
