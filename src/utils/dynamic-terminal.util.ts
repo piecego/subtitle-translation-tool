@@ -34,7 +34,9 @@ export class DynamicTerminal {
   // 总共行数
   protected static totalLine = -1
   // 输出信息
-  public async track(message: string) {
+  public async track(...messages: string[]) {
+    const message = messages.length > 1 ? messages.join('\n') : messages[0]
+    if (!message) return void 0
     const newline = message.match(/\n/g)?.length
     const line = newline ? newline + 1 : 1
     if (DynamicTerminal.cache.has(this.id)) {
@@ -54,7 +56,7 @@ export class DynamicTerminal {
         if (diff > 0) {
           for (const l of Array.from({ length: diff }).keys()) {
             DynamicTerminal.clearNthLine(
-              DynamicTerminal.totalLine - data.index + l - 1
+              DynamicTerminal.totalLine - data.index + l - data.line
             )
           }
           for (let i of Array.from({ length: diff })) {
@@ -97,6 +99,62 @@ export class DynamicTerminal {
       index > 0 && process.stdout.write('\n')
     }
     await DynamicTerminal.render()
+  }
+  // 向最后添加一行
+  public push(message: string) {
+    const cache = DynamicTerminal.cache.get(this.id)
+    if (cache) {
+      return this.track(cache.message, message)
+    } else {
+      return this.track(message)
+    }
+  }
+  // 替换最后一行
+  public pop(message: string) {
+    const cache = DynamicTerminal.cache.get(this.id)
+    if (cache) {
+      return this.track(
+        cache.message.split('\n').slice(0, -1).join('\n'),
+        message
+      )
+    } else {
+      return this.track(message)
+    }
+  }
+  // 想最前添加一行
+  public shift(message: string) {
+    const cache = DynamicTerminal.cache.get(this.id)
+    if (cache) {
+      return this.track(message, cache.message)
+    } else {
+      return this.track(message)
+    }
+  }
+  // 替换最前一行
+  public unshift(message: string) {
+    const cache = DynamicTerminal.cache.get(this.id)
+    if (cache) {
+      return this.track(message, cache.message.split('\n').slice(1).join('\n'))
+    } else {
+      return this.track(message)
+    }
+  }
+  // 从缓存中删除行，并在必要时在其位置插入新的行
+  public splice(start: number, deleteCount: number, ...messages: string[]) {
+    const cache = DynamicTerminal.cache.get(this.id)
+    if (cache) {
+      // splice存在副作用
+      const lines = cache.message.split('\n')
+      lines.splice(start, deleteCount, ...messages)
+      return this.track(lines.join('\n'))
+    } else {
+      return this.track(...messages)
+    }
+  }
+  get length(): number {
+    const cache = DynamicTerminal.cache.get(this.id)
+    if (cache) return cache.line + 1
+    else return 0
   }
   // 创建实例
   public static create(description = 'Multiline ID') {
