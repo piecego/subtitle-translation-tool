@@ -6,14 +6,9 @@ import Pumpify from 'pumpify'
 import through from 'through2'
 import write from '../helpers/write'
 import { createLogger, Logger } from '../utils/logger.util'
-import trash from 'trash'
-import {
-  clear,
-  clearLine,
-  move,
-  singleOutput,
-} from '../utils/single-line-log.utils'
 import { wait } from '../utils/timer.utils'
+import trash from 'trash'
+import { DynamicTerminal } from '../utils/dynamic-terminal.util'
 
 function readStream(
   input: string,
@@ -109,40 +104,59 @@ export class FileTranslation {
     const info = parse(file)
     if (info.ext !== this.opts.ext) return void 0
     const output = `${info.dir}${sep}${info.name}.${this.opts.language}${info.ext}`
-    logger.info(
-      `${' '.repeat(tab)}|${'-'.repeat(3)}File: "${info.name}${info.ext}"`
-    )
+    const title = `${' '.repeat(tab)}|${'-'.repeat(3)}File: "${info.name}${
+      info.ext
+    }"`
+    const dto = DynamicTerminal.create(info.name)
+    // line 1
+    await dto.track(logger.getInfo(title))
     const indent = tab + 2
     if (await fs.pathExists(output)) {
-      logger.info(
-        `${' '.repeat(indent)}|${'-'.repeat(4)}包含字幕的翻译${
-          this.opts.language
-        }文件`
+      // line 2
+      await dto.push(
+        logger.getInfo(
+          `${' '.repeat(indent)}|${'-'.repeat(4)}包含字幕的翻译${
+            this.opts.language
+          }文件`
+        )
       )
       if (this.opts.clear) {
-        logger.info(
-          `${' '.repeat(indent)}|${'-'.repeat(4)}清理该字幕的翻译文件"`
+        // line 3
+        await dto.push(
+          logger.getInfo(
+            `${' '.repeat(indent)}|${'-'.repeat(4)}清理该字幕的翻译文件"`
+          )
         )
         await trash(output)
-        logger.success(`${' '.repeat(indent)}|${'-'.repeat(4)}已移动到回收站"`)
+        // line 4
+        await dto.push(
+          logger.getSuccess(
+            `${' '.repeat(indent)}|${'-'.repeat(4)}已移动到回收站"`
+          )
+        )
         return void 0
       }
       if (!this.opts.force) {
-        logger.warn(`${' '.repeat(indent)}|${'-'.repeat(4)}跳过该文件"`)
+        // line 3
+        await dto.splice(0, dto.length, logger.getWarn(title + '  [跳过]'))
         return void 0
       } else {
-        logger.warn(`${' '.repeat(indent)}|${'-'.repeat(4)}强制覆盖"`)
+        // line 3
+        await dto.push(
+          logger.getWarn(`${' '.repeat(indent)}|${'-'.repeat(4)}强制覆盖"`)
+        )
       }
     }
     if (this.opts.clear) return void 0
-    singleOutput(
-      logger.infoInject(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译中 0%`)
+    // line 4
+    await dto.push(
+      logger.getInfo(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译中 0%`)
     )
     try {
       await readStream(file, output, this.keywordsMap, (percentage) => {
-        clearLine()
-        singleOutput(
-          logger.infoInject(
+        // line 4
+        dto.pop(
+          logger.getInfo(
             `${' '.repeat(indent)}|${'-'.repeat(4)}翻译中 ${percentage.toFixed(
               2
             )}%`
@@ -150,28 +164,36 @@ export class FileTranslation {
         )
       })
       await wait(160)
-      clearLine()
-      logger.success(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译完成`)
+      await dto.splice(0, dto.length, logger.getSuccess(title + '  [完成]'))
     } catch (e) {
       await fs.remove(output)
-      clearLine()
+      await dto.splice(0, dto.length)
       switch (e) {
         case 1003:
-          logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译超时`)
+          await dto.track(
+            logger.getError(`${title}  [翻译超时]`)
+          )
           break
         case 1000:
-          logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}运行超载`)
-          this.readFile(file, tab, logger)
+          await dto.track(
+            logger.getError(`${title}  [运行超载]`)
+          )
+          await this.readFile(file, tab, logger)
           break
         case 1002:
-          logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}无法获取翻译结果`)
+          await dto.track(
+            logger.getError(`${title}  [无法获取翻译结果]`)
+          )
           break
         case 1001:
-          logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译内容为空`)
+          await dto.track(
+            logger.getError(`${title}  [翻译内容为空]`)
+          )
           break
         default:
-          logger.error(`${' '.repeat(indent)}|${'-'.repeat(4)}翻译失败`)
-          console.error(e)
+          await dto.track(
+            logger.getError(`${title}  [翻译失败]`)
+          )
       }
     }
   }
@@ -187,13 +209,15 @@ export class FileTranslation {
       `${' '.repeat(tab)}|${'-'.repeat(3)}Directory: "${parse(dir).base}"`
     )
     const max = this.opts.worker
-    for (let i = 0; i <= Math.ceil(files.length / max); i++) {
+    for (let i = 0; i < Math.ceil(files.length / max); i++) {
       await Promise.all(
         files
           .slice(i * max, i * max + max)
           .map((file) => this.read(join(dir, file), tab + 2))
       )
+      DynamicTerminal.end()
     }
+    logger.success('全部翻译完成')
   }
   async read(input: string, tab = 0) {
     if (!(await fs.pathExists(input))) {
