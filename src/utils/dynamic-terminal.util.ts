@@ -177,7 +177,7 @@ export class DynamicTerminal {
     if (n === 0) {
       readline.cursorTo(process.stdout, 0)
       process.stdout.write(message)
-      // readline.clearLine(process.stdout, Direction.clearRight)
+      readline.clearLine(process.stdout, Direction.clearRight)
       return void 0
     }
     readline.cursorTo(process.stdout, 0)

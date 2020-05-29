@@ -2,7 +2,7 @@ import { wait } from './timer.utils'
 import { DynamicTerminal } from './dynamic-terminal.util'
 import chalk from 'chalk'
 
-;(async function main() {
+async function test1() {
   if (process.stdout.columns < 120) {
     process.stdout.write(chalk.red('你的窗口太小了'))
     return void 0
@@ -55,4 +55,14 @@ import chalk from 'chalk'
   )
   DynamicTerminal.end()
   console.log('喵喵喵')
-})()
+}
+async function test2(){
+  const logger = DynamicTerminal.create('test2')
+  logger.track('我水水水水水水水')
+  await wait(1800)
+  logger.track('我水水水水水水水三十三')
+  await wait(3600)
+  logger.track('我水水鱼鱼鱼')
+  await wait(4800)
+}
+test2()
