@@ -65,4 +65,10 @@ async function test2(){
   logger.track('我水水鱼鱼鱼')
   await wait(4800)
 }
-test2()
+async function test3() {
+  console.log('我是一段文字')
+  await wait(1800)
+  DynamicTerminal.clearPreviousLine()
+  await wait(1800)
+}
+test3()

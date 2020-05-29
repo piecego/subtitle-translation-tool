@@ -166,6 +166,11 @@ export class DynamicTerminal {
   public static create(description = 'Multiline ID') {
     return new DynamicTerminal(Symbol(description))
   }
+  public static clearPreviousLine() {
+    readline.cursorTo(process.stdout, 0)
+    readline.moveCursor(process.stdout, 0, -1)
+    readline.clearLine(process.stdout, Direction.clearRight)
+  }
   protected static clearLine() {
     if (process.stdout.columns > 0) {
       process.stdout.write(`\r${' '.repeat(process.stdout.columns - 1)}`)
